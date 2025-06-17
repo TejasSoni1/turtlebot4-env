@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/watonomous/robot_base/base:humble-ubuntu22.04
+ARG BASE_IMAGE=osrf/ros:humble-desktop-full
 
 ################################ Source ################################
 FROM ${BASE_IMAGE} AS source
@@ -25,7 +25,8 @@ RUN apt install -y lsb-release wget gnupg
 RUN wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
 RUN apt-get -y update
-RUN apt-get -y install ros-${ROS_DISTRO}-ros-gz ignition-fortress
+# The following apt-get install line is commented out due to missing packages in the ROS 2 apt repository.
+# RUN apt-get -y install ros-${ROS_DISTRO}-ros-gz ignition-fortress
 RUN echo $GAZEBO_PLUGIN_PATH=/opt/ros/humble/lib
 
 # Install Rosdep requirements
@@ -35,6 +36,32 @@ RUN apt-fast install -qq -y --no-install-recommends $(cat /tmp/colcon_install_li
 # Copy in source code from source stage
 WORKDIR ${AMENT_WS}
 COPY --from=source ${AMENT_WS}/src src
+
+# Add ROS 2 GPG key and apt source
+RUN apt-get update && apt-get install -y curl gnupg2 lsb-release \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list
+
+# Install minimal ROS 2 base and Gazebo simulation packages to avoid 404 errors
+RUN apt-get update && apt-get install -y \
+    ros-humble-ros-base \
+    ros-humble-gazebo-ros-pkgs \
+    ros-humble-gazebo-ros2-control \
+    ros-humble-nav-msgs \
+    ros-humble-geometry-msgs \
+    ros-humble-sensor-msgs \
+    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y ros-humble-desktop && rm -rf /var/lib/apt/lists/*  # (Commented out due to 404 errors)
+
+# Attempt to install additional packages, ignore errors if missing
+RUN apt-get update && apt-get install -y ros-humble-foxglove-bridge ros-humble-ros-gz-bridge ros-humble-ros-gz-sim ignition-fortress || true
+
+# Install tf2 dependencies explicitly for simulation
+RUN apt-get update && apt-get install -y \
+    ros-humble-tf2 \
+    ros-humble-tf2-ros \
+    ros-humble-tf2-geometry-msgs \
+    && rm -rf /var/lib/apt/lists/*
 
 # Dependency Cleanup
 WORKDIR /

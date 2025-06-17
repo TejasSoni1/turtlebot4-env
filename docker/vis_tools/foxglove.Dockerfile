@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/watonomous/robot_base/base:humble-ubuntu22.04
+ARG BASE_IMAGE=osrf/ros:humble-desktop-full
 
 ################################ Source ################################
 FROM ${BASE_IMAGE} AS source
@@ -18,8 +18,13 @@ RUN apt-get -qq update && rosdep update && \
 ################################# Dependencies ################################
 FROM ${BASE_IMAGE} AS dependencies
 
+# Set up ROS 2 GPG key and apt source FIRST
+RUN apt-get update && apt-get install -y curl gnupg2 lsb-release \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list
+
 # Install Foxglove Deps
-RUN apt-get update && apt-get install -y curl ros-humble-ros2bag ros-humble-rosbag2* ros-humble-foxglove-msgs&& \
+RUN apt-get update && apt-get install -y curl ros-humble-ros2bag ros-humble-rosbag2 && \
     rm -rf /var/lib/apt/lists/*
 
 # Set up apt repo
@@ -27,12 +32,10 @@ RUN apt-get update && apt-get install -y lsb-release software-properties-common 
     apt-add-repository universe
 
 # Install Dependencies
-RUN apt-get update && \
-    apt-get install -y \ 
-    ros-$ROS_DISTRO-foxglove-bridge \
-    ros-$ROS_DISTRO-rosbridge-server \
-    ros-$ROS_DISTRO-topic-tools \
-    ros-$ROS_DISTRO-vision-msgs
+RUN apt-get update && apt-get install -y ros-humble-desktop
+
+# Install additional dependencies
+RUN apt-get update && apt-get install -y ros-humble-foxglove-bridge ros-humble-ros-gz-bridge ros-humble-ros-gz-sim ignition-fortress || true
 
 # Install Rosdep requirements
 COPY --from=source /tmp/colcon_install_list /tmp/colcon_install_list

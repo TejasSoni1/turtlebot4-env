@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/watonomous/robot_base/base:humble-ubuntu22.04
+ARG BASE_IMAGE=osrf/ros:humble-desktop-full
 
 ################################ Source ################################
 FROM ${BASE_IMAGE} AS source
@@ -32,6 +32,20 @@ RUN apt-fast install -qq -y --no-install-recommends $(cat /tmp/colcon_install_li
 # Copy in source code from source stage
 WORKDIR ${AMENT_WS}
 COPY --from=source ${AMENT_WS}/src src
+
+# Setup ROS 2 GPG key and apt source
+RUN apt-get update && apt-get install -y curl gnupg2 lsb-release \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list
+
+# Install tf2 dependencies explicitly for build
+RUN apt-get update && apt-get install -y \
+    ros-humble-tf2 \
+    ros-humble-tf2-ros \
+    ros-humble-tf2-geometry-msgs \
+    && rm -rf /var/lib/apt/lists/*
+
+# (Removed all apt-get install lines for ROS 2 packages; all are present in the base image)
 
 # Dependency Cleanup
 WORKDIR /
