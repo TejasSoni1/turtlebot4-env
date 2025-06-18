@@ -4,7 +4,10 @@ services:
     build:
       context: .
       dockerfile: docker/turtlebot4/robot.Dockerfile
-    command: ros2 launch turtlebot4_bringup robot.launch.py
+    # Launch TurtleBot4 node alongside the Nav2 stack
+    command: >
+      bash -c "ros2 run turtlebot4_node turtlebot4_node &\
+                 ros2 launch turtlebot4_navigation nav2.launch.py use_sim_time:=true"
     environment:
       - ROS_DOMAIN_ID=0
     volumes:

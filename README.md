@@ -13,7 +13,7 @@ VS Code (with WSL on Windows).
 3. Open the folder in VS Code and select **Reopen in Container** when
    prompted.
 4. The devcontainer launches three services via Docker Compose:
-   - **robot** – TurtleBot4 ROS 2 nodes and navigation stack
+   - **robot** – TurtleBot4 node and Nav2 stack
    - **simulation** – Ignition Gazebo running headless with simulated
      LiDAR and odometry
    - **foxglove** – `foxglove_bridge` exposing ROS topics on port `8765`
@@ -21,6 +21,21 @@ VS Code (with WSL on Windows).
    topics such as `/scan` and `/odom`.
 6. (Optional) Download `TurtleBotTutorial.ipynb` into `notebooks/` to
    run Python examples that command the robot.
+
+
+The robot image installs the following packages from the official
+TurtleBot 4 repository:
+
+```
+ros-humble-turtlebot4-msgs
+ros-humble-turtlebot4-navigation
+ros-humble-turtlebot4-node
+```
+
+The included URDF references `turtlebot4_description` so the simulated
+robot matches the real hardware.
+7. Alternatively, run `./start_sim.sh` to build and start the stack without VS Code.
+
 
 The containers use ROS 2 Humble on Ubuntu 22.04 with all TurtleBot4
 packages pinned to their apt versions to ensure a stable environment.
