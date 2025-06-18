@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  robot:
+    build:
+      context: .
+      dockerfile: docker/turtlebot4/robot.Dockerfile
+    command: ros2 launch turtlebot4_bringup robot.launch.py
+    environment:
+      - ROS_DOMAIN_ID=0
+    volumes:
+      - ./src:/root/turtlebot4_ws/src:rw
+    tty: true
+    networks: [rosnet]
+  simulation:
+    build:
+      context: .
+      dockerfile: docker/turtlebot4/simulation.Dockerfile
+    command: ros2 launch turtlebot4_ignition_bringup ignition.launch.py
+    environment:
+      - ROS_DOMAIN_ID=0
+      - IGNITION_GUI_PLUGIN=false
+    tty: true
+    networks: [rosnet]
+  foxglove:
+    build:
+      context: .
+      dockerfile: docker/turtlebot4/foxglove.Dockerfile
+    command: ros2 run foxglove_bridge foxglove_bridge --port 8765
+    environment:
+      - ROS_DOMAIN_ID=0
+    ports:
+      - "8765:8765"
+    tty: true
+    networks: [rosnet]
+
+networks:
+  rosnet:
