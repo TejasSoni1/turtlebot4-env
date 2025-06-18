@@ -21,7 +21,9 @@ VS Code (with WSL on Windows).
    topics such as `/scan` and `/odom`.
 6. (Optional) Download `TurtleBotTutorial.ipynb` into `notebooks/` to
    run Python examples that command the robot.
+
 7. Alternatively, run `./start_sim.sh` to build and start the stack without VS Code.
+
 
 The containers use ROS 2 Humble on Ubuntu 22.04 with all TurtleBot4
 packages pinned to their apt versions to ensure a stable environment.
