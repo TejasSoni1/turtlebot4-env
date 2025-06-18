@@ -33,6 +33,7 @@ void CostmapCore::updateFromLaserScan(const sensor_msgs::msg::LaserScan& scan) {
   double angle = scan.angle_min;
   int robot_x = static_cast<int>((0.0 - origin_x_) / resolution_);
   int robot_y = static_cast<int>((0.0 - origin_y_) / resolution_);
+  
   for (size_t i = 0; i < scan.ranges.size(); ++i) {
     float r = scan.ranges[i];
     if (std::isfinite(r) && r > scan.range_min && r < scan.range_max) {
@@ -40,11 +41,12 @@ void CostmapCore::updateFromLaserScan(const sensor_msgs::msg::LaserScan& scan) {
       double y = r * std::sin(angle);
       int grid_x = static_cast<int>((x - origin_x_) / resolution_);
       int grid_y = static_cast<int>((y - origin_y_) / resolution_);
+      
       // Raytrace from robot to hit cell, mark as free (0)
       raytrace(robot_x, robot_y, grid_x, grid_y, [this](int x, int y) {
         this->setCell(x, y, 0);
       });
-      // Mark hit cell as occupied (100)
+      // Mark hit cell as occupied (100) - use full occupancy for obstacles
       setCell(grid_x, grid_y, 100);
     }
     angle += scan.angle_increment;
@@ -54,17 +56,20 @@ void CostmapCore::updateFromLaserScan(const sensor_msgs::msg::LaserScan& scan) {
 void CostmapCore::inflateObstacles(double inflation_radius) {
   int inflation_cells = static_cast<int>(inflation_radius / resolution_);
   std::vector<std::vector<int8_t>> inflated_grid = grid_;
+  
   for (int y = 0; y < height_; ++y) {
     for (int x = 0; x < width_; ++x) {
-      if (grid_[y][x] == 100) {
+      if (grid_[y][x] == 100) { // Only inflate actual obstacles
         for (int dy = -inflation_cells; dy <= inflation_cells; ++dy) {
           for (int dx = -inflation_cells; dx <= inflation_cells; ++dx) {
             int nx = x + dx;
             int ny = y + dy;
             double dist = std::hypot(dx * resolution_, dy * resolution_);
             if (nx >= 0 && nx < width_ && ny >= 0 && ny < height_ && dist <= inflation_radius) {
-              int8_t cost = static_cast<int8_t>(100 * (1.0 - dist / inflation_radius));
-              inflated_grid[ny][nx] = std::max(inflated_grid[ny][nx], cost);
+              if (inflated_grid[ny][nx] != 100) { // Don't overwrite actual obstacles
+                // Use binary inflation - either obstacle (99) or free (0)
+                inflated_grid[ny][nx] = 99; // High cost for inflated areas
+              }
             }
           }
         }

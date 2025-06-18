@@ -54,12 +54,15 @@ class PlannerCore {
     rclcpp::Logger logger_;
     // Helper methods
     bool isCellFree(const nav_msgs::msg::OccupancyGrid& map, int x, int y) const;
+    bool canStartFrom(const nav_msgs::msg::OccupancyGrid& map, int x, int y) const;
     CellIndex poseToCell(const nav_msgs::msg::OccupancyGrid& map, const geometry_msgs::msg::Pose& pose) const;
     CellIndex pointToCell(const nav_msgs::msg::OccupancyGrid& map, const geometry_msgs::msg::Point& pt) const;
     geometry_msgs::msg::Pose cellToPose(const nav_msgs::msg::OccupancyGrid& map, const CellIndex& cell) const;
     std::vector<CellIndex> getNeighbors(const nav_msgs::msg::OccupancyGrid& map, const CellIndex& cell) const;
     double heuristic(const CellIndex& a, const CellIndex& b) const;
     std::vector<CellIndex> reconstructPath(const std::unordered_map<CellIndex, CellIndex, CellIndexHash>& came_from, CellIndex current);
+    // Path validation and smoothing
+    bool isPathValid(const nav_msgs::msg::OccupancyGrid& map, const std::vector<CellIndex>& path) const;
 };
 
 }  
