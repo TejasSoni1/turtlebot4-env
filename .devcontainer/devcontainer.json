@@ -1,0 +1,12 @@
+{
+  "name": "TurtleBot4 DevContainer",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "robot",
+  "runServices": ["simulation", "foxglove"],
+  "workspaceFolder": "/workspace",
+  "settings": {},
+  "extensions": [
+    "ms-iot.vscode-ros",
+    "ms-python.python"
+  ]
+}
