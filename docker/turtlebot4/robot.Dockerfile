@@ -3,7 +3,9 @@ FROM osrf/ros:humble-desktop
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ros-humble-turtlebot4-desktop \
-        ros-humble-turtlebot4-navigation && \
+        ros-humble-turtlebot4-navigation \
+        ros-humble-turtlebot4-msgs \
+        ros-humble-turtlebot4-node && \
     rm -rf /var/lib/apt/lists/*
 
 ENV ROS_WS=/root/turtlebot4_ws
